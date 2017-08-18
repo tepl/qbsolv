@@ -36,7 +36,7 @@ This directory contains the following files and directories:
 - contrib.txt:      Instructions for potential contributors
 
 
-    qbsolv -i infile [-o outfile] [-m] [-n] [-w] 
+    qbsolv -i infile [-o outfile] [-m] [-n repeats] [-w] 
         [-h] [-v verbosityLevel] [-V] [-q] [-r seed] [-p paramChain] [-R numReads]
 
 DESCRIPTION 
@@ -61,8 +61,7 @@ DESCRIPTION
     -n repeats 
         This optional argument denotes, once a new optimal value is 
         found, to repeat the main loop of the algorithm this number
-        of times with no change in optimal value before stopping.  
-        The default value is 50. 
+        of times before stopping. The default value is 50.
     -w 
         If present, this optional argument will print the QUBO 
         matrix and result in .csv format. 
@@ -88,10 +87,10 @@ DESCRIPTION
         Used to reset the seed for the random number generation.
     -p paramChain 
         This optional argument denotes strength of qubit chains 
-        in a complete graph, default is 15.
+        in a complete graph. The default value is 15.
     -R numReads 
-        This optional argument denotes number of reads,
-        default is 10.
+        This optional argument denotes number of reads.
+        The default value is 10.",
 
 ------------------------
 qbsolv "qubo" input file format

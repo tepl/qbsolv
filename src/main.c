@@ -26,6 +26,7 @@ char            *outFileNm_, pgmName_[16];
 double          **val;
 double          paramChain_;
 int             numReads_;
+int             nRepeats_;
 
 struct nodeStr_ *nodes_;
 struct nodeStr_ *couplers_;
@@ -56,7 +57,7 @@ int  main( int argc,  char *argv[])
     strcpy(pgmName_, "qbsolv");
     findMax_     = false;
     Verbose_     = 0;
-    int nRepeats = defaultRepeats;
+    nRepeats_    = defaultRepeats;
 
     WriteMatrix_ = false;
     outFile_     = stdout;
@@ -107,7 +108,7 @@ int  main( int argc,  char *argv[])
             findMax_ = true; // go for the maximum value otherwise the minimum is found by default
             break;
         case 'n':
-            nRepeats = strtol(optarg, &chx, 10); // this sets the number of outer loop repeat without improvement
+            nRepeats_ = strtol(optarg, &chx, 10); // this sets the number of outer loop repeat
             break;
         case 'v':
             Verbose_ = strtol(optarg, &chx, 10); // this sets the value of the Verbose
@@ -172,7 +173,7 @@ int  main( int argc,  char *argv[])
 
     numsolOut_=0;
     print_opts(maxNodes_);
-    solve(val, maxNodes_, nRepeats);
+    solve(val, maxNodes_, nRepeats_);
 
     dw_close();
 
@@ -186,7 +187,7 @@ int  main( int argc,  char *argv[])
 
 void  print_help(void)
 {
-    printf("\n\t%s -i infile [-o outfile] [-m] [-n] [-S SubMatrix] [-w] \n"
+    printf("\n\t%s -i infile [-o outfile] [-m] [-n repeats] [-S SubMatrix] [-w] \n"
            "\t\t[-h] [-v verbosityLevel] [-V] [-q] [-p paramChain] [-R numReads]\n"
            "\nDESCRIPTION\n"
            "\tqbsolv executes a quadratic unconstrained binary optimization \n"
@@ -210,8 +211,7 @@ void  print_help(void)
            "\t-n repeats \n"
            "\t\tThis optional argument denotes, once a new optimal value is \n"
            "\t\tfound, to repeat the main loop of the algorithm this number\n"
-           "\t\tof times with no change in optimal value before stopping.  \n"
-           "\t\tThe default value is %d. \n"
+           "\t\tof times before stopping. The default value is %d. \n"
            "\t-S subproblemSize \n"
            "\t\tThis optional argument indicates the size of the sub-\n"
            "\t\tproblems into which the QUBO will be decomposed.  A \n"
@@ -246,10 +246,10 @@ void  print_help(void)
            "\t\tUsed to reset the seed for the random number generation.\n"
            "\t-p paramChain \n"
            "\t\tThis optional argument denotes strength of qubit chains \n"
-           "\t\tin a complete graph, default is 15.\n"
+           "\t\tin a complete graph. The default value is 15.\n"
            "\t-R numReads \n"
-           "\t\tThis optional argument denotes number of reads,\n"
-           "\t\tdefault is 10.\n",
+           "\t\tThis optional argument denotes number of reads.\n"
+           "\t\tThe default value is 10.\n",
            pgmName_, defaultRepeats);
 
     return;
