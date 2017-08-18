@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
-#define  VERSION    "open source 2.4"
+#define  VERSION    "open source 2.4 (no Tabu search)"
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
