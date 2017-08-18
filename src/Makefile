@@ -1,8 +1,8 @@
 src = $(wildcard *.c)
 obj = $(src:.c=.o)
 
-CC = clang 
-#CC = gcc 
+#CC = clang 
+CC = gcc 
 
 CPPFLAGS = -Wall -Ofast -Wextra -std=gnu99
 LDFLAGS = -lm
