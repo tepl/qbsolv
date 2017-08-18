@@ -9,17 +9,17 @@ In addition, this version has couple more options to give a user
 more control over the algorithm. Original qbsolv has these options hard-coded.
 
 Added options:
- * (-p) paramChain
- * (-R) numReads
+ * [-p] paramChain
+ * [-R] numReads
 
 Removed options:
- * (-a) alrorithm
- * (-T) target mode
- * (-t) timeout
- * (-S) subproblemSize 
+ * [-a] alrorithm
+ * [-T] target mode
+ * [-t] timeout
+ * [-S] subproblemSize
 
 
-README.txt file for qbsolv 
+Updated content of original README.txt
 
 This directory contains the following files and directories:
 - README.txt:       this file
