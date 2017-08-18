@@ -8,6 +8,11 @@ solely using hardware, i.e. without any help from classic solvers.
 In addition, this version has couple more options to give a user
 more control over the algorithm. Original qbsolv has these options hard-coded.
 
+Missing options:
+ * (-a) alrorithm
+ * (-T) target mode
+ * (-t) timeout
+ * (-S) subproblemSize 
 
 
 README.txt file for qbsolv 
@@ -25,8 +30,8 @@ This directory contains the following files and directories:
 - contrib.txt:      Instructions for potential contributors
 
 
-    qbsolv -i infile [-o outfile] [-m] [-T] [-n] [-S SubMatrix] [-w] 
-        [-h] [-a algorithm] [-v verbosityLevel] [-V] [-q] [-t seconds]
+    qbsolv -i infile [-o outfile] [-m] [-n] [-w] 
+        [-h] [-v verbosityLevel] [-V] [-q]
 
 DESCRIPTION 
     qbsolv executes a quadratic unconstrained binary optimization 
@@ -44,37 +49,14 @@ DESCRIPTION
         This optional argument denotes the name of the file to 
         which the output will be written.  The default is the 
         standard output. 
-    -a algorithm 
-         This optional argument chooses nuances of the outer loop
-         algorithm.  The default is o.
-         'o' for original qbsolv method. Submatrix based upon change in energy.
-         'p' for path relinking.  Submatrix based upon differences of solutions
     -m 
         This optional argument denotes to find the maximum instead 
         of the minimum. 
-    -T target 
-        This optional argument denotes to stop execution when the 
-        target value of the objective function is found. 
-    -t timeout 
-        This optional argument stops execution when the elapsed 
-        cpu time equals or exceeds timeout value. Timeout is only checked 
-        after completion of the main loop. Other halt values 
-        such as 'target' and 'repeats' will halt before 'timeout'.
-        The default value is 2592000.0.
     -n repeats 
         This optional argument denotes, once a new optimal value is 
         found, to repeat the main loop of the algorithm this number
         of times with no change in optimal value before stopping.  
         The default value is 50. 
-    -S subproblemSize 
-        This optional argument indicates the size of the sub-
-        problems into which the QUBO will be decomposed.  A 
-        "-S 0" or "-S" argument not present indicates to use the
-        size specified in the embedding file found in the workspace
-        set up by DW.  If a DW environment has not been established,
-        the value will default to (47) and will use the tabu solver
-        for subproblem solutions.  If a value is specified, qbsolv uses
-        that value to create subproblem and solve with the tabu solver. 
     -w 
         If present, this optional argument will print the QUBO 
         matrix and result in .csv format. 

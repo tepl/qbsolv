@@ -16,10 +16,9 @@
 // -------  GLOBAL Variables  ------------------------------------------
 extern FILE   *outFile_;
 extern int    maxNodes_, nCouplers_, nNodes_, findMax_, start_, numsolOut_;
-extern int    my_pid_, UseDwave_; 
-extern int    Verbose_, SubMatrix_, TargetSet_, WriteMatrix_, Tlist_;
-extern char   *outFileNm_, pgmName_[16], algo_[4];
-extern double Target_, Time_;
+extern int    my_pid_;
+extern int    Verbose_, SubMatrix_, WriteMatrix_;
+extern char   *outFileNm_, pgmName_[16];
 
 extern struct nodeStr_ *nodes_;
 extern struct nodeStr_ *couplers_;

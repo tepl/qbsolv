@@ -21,10 +21,9 @@
 //
 FILE            *outFile_;
 int             maxNodes_, nCouplers_, nNodes_, findMax_,numsolOut_;
-int             Verbose_, SubMatrix_, UseDwave_, TargetSet_, WriteMatrix_, Tlist_;
-char            *outFileNm_, pgmName_[16], algo_[4];
+int             Verbose_, SubMatrix_, WriteMatrix_;
+char            *outFileNm_, pgmName_[16];
 double          **val;
-double          Target_, Time_;
 struct nodeStr_ *nodes_;
 struct nodeStr_ *couplers_;
 //  main routine,
@@ -53,17 +52,11 @@ int  main( int argc,  char *argv[])
 
     strcpy(pgmName_, "qbsolv");
     findMax_     = false;
-    UseDwave_    = false;
     Verbose_     = 0;
     int nRepeats = defaultRepeats;
-    SubMatrix_   = 46; // submatrix default
-    strcpy(algo_, "o"); //algorithm default
 
     WriteMatrix_ = false;
     outFile_     = stdout;
-    TargetSet_   = false;
-    Time_        = 2592000; // the maximum runtime of the algorithm in seconds before timeout (2592000 = a months worth of seconds)
-    Tlist_       = -1; // tabu list length  -1 signials go with defaults
     int64_t seed       = 17932241798878;
     int  errorCount = 0;
 
@@ -73,42 +66,24 @@ int  main( int argc,  char *argv[])
         { "outfile",        required_argument, NULL, 'o'},
         { "verbosityLevel", required_argument, NULL, 'v'},
         { "version",        no_argument,       NULL, 'V'},
-        { "subproblemSize", required_argument, NULL, 'S'},
-        { "target",         required_argument, NULL, 'T'},
         { "repeats",        required_argument, NULL, 'n'},
+        { "writeMatrix",    no_argument,       NULL, 'w'},
         { "max",            no_argument,       NULL, 'm'},
         { "output",         required_argument, NULL, 'o'},
-        { "timeout",        required_argument, NULL, 't'},
         { "quboFormat",     no_argument,       NULL, 'q'},
-        { "tlist",          required_argument, NULL, 'l'},
         { "seed",           required_argument, NULL, 'r'},
-        { "Algo",           required_argument, NULL, 'a'},
         { NULL,             no_argument,       NULL, 0}
     };
 
     int  opt, option_index = 0;
     char *chx; // used as exit ptr in strto(x) functions
-    if ( dw_established () ) {  // user has set up a DW envir
-        UseDwave_ = true;
+    if ( !dw_established () ) {  // user has set up a DW envir
+        fprintf(stderr, "DW is not established\n");
+        exit(9);
     }
 
-    while ((opt = getopt_long(argc, argv, "Hhi:o:v:VS:T:l:n:wmo:t:qr:a:", longopts, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "Hhi:o:v:Vn:wmo:qr:", longopts, &option_index)) != -1) {
         switch (opt) {
-        case 'a':
-            strcpy(algo_, optarg); //algorithm copied off of command line -a option
-            switch (algo_[0]) {
-                case 'o' :
-                    // Original Dwave algorithm
-                    break;
-                case 'd' :
-                    // choose "Solution diversity"
-                    break;
-                default: /* unknown */
-                    printf(" Unknown Algorithm choice: options are o:d cmdline had %s \n",algo_);
-                    exit(9);
-                break;
-            }
-            break;
         case 'H':
         case 'h':
             print_help();
@@ -119,9 +94,6 @@ int  main( int argc,  char *argv[])
                 fprintf(stderr, "\n\t Error - can't find/open file " "\"%s\"\n\n", optarg);
                 exit(9);
             }
-            break;
-        case 'l':
-            Tlist_ = strtol(optarg, &chx, 10); // this sets the length of the tabu list
             break;
         case 'm':
             findMax_ = true; // go for the maximum value otherwise the minimum is found by default
@@ -135,28 +107,6 @@ int  main( int argc,  char *argv[])
         case 'V':
             fprintf(outFile_, " Version " VERSION " \n Compiled: " __DATE__ ","__TIME__ "\n");
             exit(9);
-            break;
-        case 'S':
-            SubMatrix_ = strtol(optarg, &chx, 10); // this sets the size of the Partitioning Matrix
-            if ( SubMatrix_ < 10 ) {
-                                     // other settings, this could be setting it from true above to false here.
-                if ( SubMatrix_ != 0) {
-                    fprintf(stderr, "\n Error --  SubMatrix must be 0 or greater than 10.  -S %d\n ", SubMatrix_);
-                    ++errorCount;
-                }
-            }
-
-            UseDwave_ = false;   // explicit setting of Submatrix says to use tabu solver, regardless of other 
-            if ( SubMatrix_ == 0 ) {
-                UseDwave_ = true; // except where -S 0
-            }
-            break;
-        case 'T':
-            Target_    = strtod(optarg, (char**)NULL); // this sets desired optimal energy
-            TargetSet_ = true;
-            break;
-        case 't':
-            Time_ = strtod(optarg, (char**)NULL); // this sets the maximum runtime of the algorithm in seconds
             break;
         case 'o':
             if ((outFile_ = fopen(optarg, "w")) == NULL) {
@@ -204,16 +154,14 @@ int  main( int argc,  char *argv[])
     val = (double**)malloc2D(maxNodes_, maxNodes_, sizeof(double) ); // create a 2d double array
     fill_qubo(val, maxNodes_, nodes_, nNodes_, couplers_, nCouplers_); // move to a 2d array
 
-    if ( UseDwave_ ) { // either -S not set and DW_INTERNAL__CONNECTION ev variable not NULL, or -S set to 0, 
-        dw_init();  
-    }
+    dw_init();
+
     numsolOut_=0;
     print_opts(maxNodes_);
     solve(val, maxNodes_, nRepeats);
 
-    if ( UseDwave_ ) {
-        dw_close();
-    }
+    dw_close();
+
     if (Verbose_ > 3) {
         fprintf(outFile_, "\n\t\"qbsolv  -i %s\" (%d nodes, %d couplers) - end-of-job\n\n",
                 inFileName, nNodes_, nCouplers_);
@@ -224,8 +172,8 @@ int  main( int argc,  char *argv[])
 
 void  print_help(void)
 {
-    printf("\n\t%s -i infile [-o outfile] [-m] [-T] [-n] [-S SubMatrix] [-w] \n"
-           "\t\t[-h] [-a algorithm] [-v verbosityLevel] [-V] [-q] [-t seconds]\n"
+    printf("\n\t%s -i infile [-o outfile] [-m] [-n] [-S SubMatrix] [-w] \n"
+           "\t\t[-h] [-v verbosityLevel] [-V] [-q]\n"
            "\nDESCRIPTION\n"
            "\tqbsolv executes a quadratic unconstrained binary optimization \n"
            "\t(QUBO) problem represented in a file, providing bit-vector \n"
@@ -242,23 +190,9 @@ void  print_help(void)
            "\t\tThis optional argument denotes the name of the file to \n"
            "\t\twhich the output will be written.  The default is the \n"
            "\t\tstandard output. \n"
-           "\t-a algorithm \n"
-           "\t\t This optional argument chooses nuances of the outer loop\n"
-           "\t\t algorithm.  The default is o.\n"
-           "\t\t \'o\' for original qbsolv method. Submatrix based upon change in energy.\n"
-           "\t\t \'d\' for solution diversity.  Submatrix based upon differences of solutions\n"
            "\t-m \n"
            "\t\tThis optional argument denotes to find the maximum instead \n"
            "\t\tof the minimum. \n"
-           "\t-T target \n"
-           "\t\tThis optional argument denotes to stop execution when the \n"
-           "\t\ttarget value of the objective function is found. \n"
-           "\t-t timeout \n"
-           "\t\tThis optional argument stops execution when the elapsed \n"
-           "\t\tcpu time equals or exceeds timeout value. Timeout is only checked \n"
-           "\t\tafter completion of the main loop. Other halt values \n"
-           "\t\tsuch as \'target\' and \'repeats\' will halt before \'timeout\'.\n"
-           "\t\tThe default value is %8.1f.\n"
            "\t-n repeats \n"
            "\t\tThis optional argument denotes, once a new optimal value is \n"
            "\t\tfound, to repeat the main loop of the algorithm this number\n"
@@ -296,7 +230,7 @@ void  print_help(void)
            "\t\tformat of the QUBO file.\n"
            "\t-r seed \n"
            "\t\tUsed to reset the seed for the random number generation \n",
-           pgmName_, Time_, defaultRepeats);
+           pgmName_, defaultRepeats);
 
     return;
 }

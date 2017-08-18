@@ -149,11 +149,7 @@ void dw_init()
 
     if (Verbose_ > 2) {
         DLT; DL;
-        if ( UseDwave_ ) {
-            printf(" UseDwave = true\n");
-        } else{
-            printf(" UseDwave = false\n");
-        }
+        printf(" UseDwave = true\n");
         printf(" SubMatrix_ = %d\n", SubMatrix_);
         printf(" %s %s \n", DW_INTERNAL__WORKSPACE, workspace);
         printf(" %s %s \n", DW_INTERNAL__CONNECTION, connection);

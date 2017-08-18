@@ -49,51 +49,6 @@ void randomize_solution(int8_t *solution, int nbits)
         solution[i] = rand() % 2;
     }
 }
-// this randomly sets the bit vector to 1 or 0, with index
-void randomize_solution_by_index(int8_t *solution, int nbits, int *indices)
-{
-    for (int i = 0; i < nbits; i++) {
-        solution[indices[i]] = rand() % 2;
-    }
-}
-// this randomly sets the bit vector to 1 or 0, with similar population counts
-void randomize_pop_solution(int8_t *solution, int nbits)
-{
-    double pop_ratio;
-    int pop=0,pop_ran=0;
-    for (int i = 0; i < nbits; i++) {
-        pop+=solution[i];
-    }
-    pop_ratio = (double)((double) pop / (double) nbits  ) ;
-    pop_ran   = (int) ( (double) RAND_MAX *  pop_ratio  ) ;
-
-    for (int i = 0; i < nbits; i++) {
-        if (rand() < pop_ran ) {
-            solution[i] = 1; 
-        } else {
-            solution[i] = 0;
-        }
-    }
-}
-// this randomly sets the bit vector to 1 or 0, with similar population counts with index
-void randomize_pop_solution_by_index(int8_t *solution, int nbits, int *indices )
-{
-    double pop_ratio;
-    int pop=0,pop_ran=0;
-    for (int i = 0; i < nbits; i++) {
-        pop+=solution[indices[i]];
-    }
-    pop_ratio = (double)((double) pop / (double) nbits  ) ;
-    pop_ran   = (int) ( (double) RAND_MAX *  pop_ratio  ) ;
-
-    for (int i = 0; i < nbits; i++) {
-        if (rand() < pop_ran ) {
-            solution[indices[i]] = 1; 
-        } else {
-            solution[indices[i]] = 0;
-        }
-    }
-}
 // shuffle the index vector before sort
 void shuffle_index(int *indices, int length)
 {
@@ -162,21 +117,13 @@ void print_solution_and_qubo(int8_t *solution, int maxNodes, double **qubo)
 void print_opts(int maxNodes)
 {
     fprintf(outFile_, "%d bits, ", maxNodes);
-    if ( UseDwave_ ) {
-        fprintf(outFile_,"Quantum solver,");
-    }else {
-        fprintf(outFile_,"Classical tabu solver,");
-    }
+    fprintf(outFile_,"Quantum solver,");
     if ( findMax_ ) {
         fprintf(outFile_," find Max,");
     }else {
         fprintf(outFile_," find Min,");
     }
-    fprintf(outFile_," SubMatrix= %d,",SubMatrix_);
-    fprintf(outFile_," -a %s,",algo_);
-    if ( TargetSet_ )  fprintf(outFile_, " Target of %8.5f,", Target_);
-    fprintf(outFile_," timeout=%9.1f sec\n",Time_);
-
+    fprintf(outFile_," SubMatrix= %d\n",SubMatrix_);
 }
 
 //  This routine performs the standard output for qbsolv
@@ -195,12 +142,7 @@ void print_output(int maxNodes, int8_t *solution, long numPartCalls, double ener
     fprintf(outFile_, "\n");
     fprintf(outFile_, "%8.5f Energy of solution\n", energy);
     fprintf(outFile_, "%ld Number of Partitioned calls, %d output sample \n", numPartCalls,numsolOut_);
-    fprintf(outFile_, "%8.5f seconds of classic cpu time", seconds);
-    if ( TargetSet_ ) {
-        fprintf(outFile_, " ,Target of %8.5f\n", Target_);
-    } else {
-        fprintf(outFile_, "\n");
-    }
+    fprintf(outFile_, "%8.5f seconds of classic cpu time\n", seconds);
 }
 
 //  zero out and fill 2d arrary val from nodes and couplers (negate if looking for minimum)
@@ -295,35 +237,6 @@ void quick_sort_iterative_index(double val[], int arr[], int n, int *stack)
     }
 }
 
-// routine to check the sort on index'ed sort
-//
-int is_index_sorted(double data[], int index[], int size)
-{
-    int i;
-
-    for (i = 0; i < (size - 1); i++) {
-        if (data[index[i]] < data[index[i + 1]]) {
-            return false;
-        }
-    }
-    return true;
-}
-//
-//  find the position withing the sorted(index) array for a value
-//  index  how to traverse the array
-//  val  values to compare
-//  n  size of index array
-//  compare value to compare to  first value = > than val[index[i]]
-//
-int val_index_pos(int *index, double *val, int n, double compare)
-{
-    int i;
-    for ( i = 0; i < n ; i++ ) {
-        if ( compare >= val[index[i]] ) break;
-    }
-    return i;
-}
-
 //
 //  fill an ordered by size index array based on sizes of val
 //  a quick sort is used so that I can get speed and do a value
@@ -341,24 +254,6 @@ void val_index_sort(int *index, double *val, int n)
 
     for (i = 0; i < n; i++) index[i] = i;
     shuffle_index(index, n);
-    quick_sort_iterative_index(val, index, n, stack);
-    free(stack);
-    // check code:
-    // for (i=0;i<n-1;i++) { if (val[index[i]]<val[index[i+1]]) { DL; exit(9); } }
-    return;
-}
-
-void val_index_sort_ns(int *index, double *val, int n)
-{
-    int i;
-    int *stack; // temp space = n + 1
-    // Create an auxiliary stack
-    if ((GETMEM(stack, int, n + 1)) == NULL) {
-        BADMALLOC
-    }
-
-    // Assure that the index array covers val[] completely
-    for (i = 0; i < n; i++) index[i] = i;
     quick_sort_iterative_index(val, index, n, stack);
     free(stack);
     // check code:
@@ -398,284 +293,6 @@ void index_sort(int *index, int n, short forward)
     }
 }
 
-// compares two vectors, bit by bit
-bool is_array_equal( int8_t *solution_a, int8_t *solution_b, int nbits)
-{
-    for (int i = 0; i < nbits; i++) {
-        if (solution_a[i] != solution_b[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-//  compare, bit by bit solution_A with solution_B and save the index of the value where
-//  they differ in index[].     Return the number of values in the index vector
-//@param  solution_A = bit vector solution
-//@param  solution_B = bit vector solution
-//@param  nbits = length of the solution vectors
-//@param  index is integer index vector of (index_solution_diff) length, will be ordered 
-//      small to large
-//  ndiff number of differences between solution_A and B,, returned value
-//
-int index_solution_diff( int8_t *solution_A, int8_t *solution_B, int nbits , int *index )
-{
-    int i,ndiff=0;
-    for ( i=0;i<nbits;i++ ) {
-        if ( solution_A[i] != solution_B[i] ) {
-            index[ndiff++] = i;
-        }
-    }
-    for ( i=ndiff;i<nbits;i++ ) { // clean out the rest of the vector
-        index[i]=0;
-    }
-    return ndiff;
-}
-
-//  count, bit by bit between solutions and return the solution of the value where
-//  they differ in index[] ( any one of the solutions not same as any other ).  
-//@param  popularSol[nbits] = bit vector solution, most popular setting on a bit
-//@param  solution[num_solutions][nbits] = bit vector solution
-//@param  num_solutions number of solutions in solution
-//@param  nbits = length of the solution vectors
-//@param  sol_index is integer index vector of solution differences, will be ordered 
-//@param  bias   between 0 and (num_solutions/2)   pattern = (5,2) (6,3) (7,3) (8,4) 
-//               ex bias=0 only all set to X, set to X, any set to Y , set to Y ( Y, X can be 0 or 1)
-//               ex bias=1 all but 1 set to X, set to X , more than 1 set to Y, set to Y
-void solution_population( int8_t *popularSol, int8_t **solution, int num_solutions, int nbits , int *sol_index, int bias )
-{
-    int i,j,sum_bits;
-    for ( i=0;i<nbits;i++ ) {
-        sum_bits=0;
-        for ( j=0; j< num_solutions; j++ ) {
-          sum_bits+= solution[sol_index[j]][i];
-        } 
-        //  ex. all bits set to 1, sum_bits = num_solutions, if all 0 sum_bits = 0
-        //    if > num_solutions/2 it is mirroring differences 
-            popularSol[i]=0;
-            if ( sum_bits >= num_solutions/2 ) popularSol[i]=1;// more than 1/2 1's
-        if ( sum_bits > (int) ((num_solutions+1)/2)-1 ) {
-            sum_bits = num_solutions - sum_bits;
-        }
-        if ( sum_bits > bias ) {    // so if bias is greater than favor fliping the bit
-            if ( popularSol[i] == 1 ) {
-                popularSol[i]=0;
-            } else {
-                popularSol[i]=1;
-            }
-        }
-        // now sum_bits = number of differences,, 
-    }
-    return ;
-}
-//  compare, bit by bit between solutions and save the index of the value where
-//  they differ in index[] ( any one of the solutions not same as any other ).  
-//      Return the number number of values in the index vector
-//@param  solution[num_solutions][nbits] = bit vector solution
-//@param  num_solutions number of solutions in solution
-//@param  nbits = length of the solution vectors
-//@param  index is integer index vector of solution differences, will be ordered 
-//@param  delta_bits is integer to compare with to establish backbone in index.  if = 0 , all bits must be same, if =1, all but
-//            one bit must be the same for that column of  bits, and so on.  delta_bits  >= 0 and <= num_solutions/2
-//@param  sol_index is integer index vector of (index_solution_diff)  it is used to index into which solutions to 
-//              look at,, so that you might compare only a few of the solutions
-//      small to large
-//  ndiff number of differences between solution(s),, returned value
-//
-int mul_index_solution_diff( int8_t **solution, int num_solutions, int nbits , int *index, int delta_bits, int *sol_index )
-{
-    int i,j,ndiff=0,sum_bits;
-    for ( i=0;i<nbits;i++ ) {
-        sum_bits=0;
-        for ( j=0; j< num_solutions; j++ ) {
-          sum_bits+= solution[sol_index[j]][i];
-        } 
-        //  ex. all bits set to 1, sum_bits = num_solutions, if all 0 sum_bits = 0
-        //    if > num_solutions/2 it is mirroring differences 
-        if ( sum_bits > (int) ((num_solutions+1)/2)-1) sum_bits = num_solutions - sum_bits;
-        // now sum_bits = number of differences,, 
-        if ( sum_bits > delta_bits )  {
-                index[ndiff++] = i;   // this bit is different by more than delta_bits
-        }
-    }
-    for ( i=ndiff;i<nbits;i++ ) { // clean out the rest of the vector
-        index[i]=0;
-    }
-    return ndiff;
-}
-//  print out each soltuion in index order per qbsolve output format  
-//      Return the number number of values in the index vector
-//@param  solution[num_solutions][nbits] = bit vector solution
-//@param  energy_list is the 1d array of energies corresponding to solution_lists
-//@param  num_solutions number of solutions in solution
-//@param  nbits = length of the solution vectors
-//@param  index is integer index vector of (index_solution_diff) length, will be ordered 
-//      small to large
-//  ndiff number of differences between solution(s),, returned value
-//
-void print_solutions( int8_t **solution, double *energy_list, int *solutions_counts, int num_solutions, int nbits , int *index )
-{
-    int i,j,k;
-    double delta,energy,top_energy;
-    fprintf(outFile_, "delta energy  Energy of solution\tnfound\tindex\t i\t");
-    fprintf(outFile_, " number of unique solutions %d\n",num_solutions);
-    k=index[0];
-    top_energy=energy_list[k];
-    for ( i=num_solutions-1;i>-1;i--) {
-        k=index[i];
-        energy=energy_list[k];
-        delta=top_energy-energy_list[k];
-        fprintf(outFile_, "%8.5f \t  %8.5f \t %d \t %d \t %d \t", delta,energy,solutions_counts[k],k,i);
-        for ( j=0;j< nbits;j++) {
-            fprintf(outFile_, "%d", solution[k][j]);
-        }
-        fprintf(outFile_,"\n");
-    }
-    return;
-}
-//@param solution_now is the Q vector being looked at
-//@param solution_list is the 2d array of Q vectors being stored
-//@param energy_now is the energy of the Q vector being looked at
-//@param energy_list is the 1d array of energies corresponding to solution_lists
-//@param solution_counts is the 1d array of hits on the corresponding solution_lists
-//@param list_order is the order of solution_list based upon energies
-//@param nMax is size of the arrays (solution_list, energy_list...)
-//@param num_nq_soltuions is the number of unique soltuions in the solution_list...)
-// if solution_now is unique, and is better than or equal to the worst solution add it to solution_list
-// if solution_now is not unique ( equal energy )  increment number of times found
-struct sol_man_rslt manage_solutions( int8_t *solution_now, int8_t **solution_list, double energy_now,
-    double *energy_list, int *solution_counts, int *list_order, int nMax, int nbits, int *num_nq_solutions)
-{
-
-    struct sol_man_rslt result;
-    val_index_sort_ns(list_order, energy_list, nMax); // index array of sorted energies
-
-    //printf(" %d ",(*num_nq_solutions));
-    // new high value,
-    if (energy_now > energy_list[list_order[0]] ) {
-        // we will add it to the space to an empty queue, Sort will fix it later
-        int empty_row = list_order[nMax - 1];
-
-        // save the bits to Qlist first entry
-        for (int i = 0; i < nbits; i++) {
-            solution_list[empty_row][i] = solution_now[i];
-        }
-        (*num_nq_solutions)=MIN((*num_nq_solutions)++,nMax);
-
-        energy_list[empty_row] = energy_now;
-        solution_counts[empty_row] = 1;
-
-        // index array of sorted energies
-        val_index_sort_ns(list_order, energy_list, nMax);
-
-        // we have added this Qnow to the collective, might have overwritten an old one
-        result.code= NEW_HIGH_ENERGY_UNIQUE_SOL;
-        result.count= 1;
-        result.pos= val_index_pos(list_order,energy_list,nMax ,energy_now);
-        if (Verbose_>3 ) {printf(" NEW_HIGH_ENERGY_UNIQUE_SOL   %lf %d %d\n", energy_now,result.count,result.pos) ;}
-        return result;
-    }
-
-    // list energies are all higher than this, do nothing
-    if (energy_now < energy_list[list_order[nMax - 1]] ) {
-        val_index_sort(list_order, energy_list, nMax); // index array of sorted energies
-        result.code= NOTHING;
-        result.count= 0;
-        result.pos= val_index_pos(list_order,energy_list,nMax ,energy_now);
-        if(Verbose_>3){printf(" NOTHING                      %lf %d %d\n", energy_now,result.count,result.pos) ;}
-        return result;
-    }
-
-    // new energy is in the range of our list
-    // search thru the list to see if there is an equal energy
-    for (int i = 0; i < nMax; i++) {
-        if (energy_now == energy_list[list_order[i]]) {
-
-            int j = i; // now have a common energy, but it could be that we have a different Q
-
-            // look thru all Q's of common energy (they are ordered)
-            while (j < nMax && energy_list[list_order[j]] == energy_now) {
-                if (is_array_equal(solution_list[list_order[j]], solution_now, nbits)) {
-                    // simply mark this Q and energy as a duplicate find
-                    solution_counts[list_order[j]]++;
-
-                    if (energy_now == energy_list[list_order[0]]) {
-                        // duplicate energy matching another Q and equal to best energy
-                        result.code= DUPLICATE_HIGHEST_ENERGY;
-                        result.count= solution_counts[list_order[0]];
-                        result.pos= val_index_pos(list_order,energy_list,nMax ,energy_now);
-                        if(Verbose_>3) {printf(" DUPLICATE_HIGHEST_ENERGY     %lf %d %d\n",energy_now,result.count,result.pos);}
-                        return result;
-                    } else {
-                        // duplicate energy matching older lower energy Q
-                        result.code= DUPLICATE_ENERGY;
-                        result.count= solution_counts[list_order[j]];
-                        result.pos= val_index_pos(list_order,energy_list,nMax ,energy_now);
-                        if(Verbose_>3) {printf(" DUPLICATE_ENERGY             %lf %d %d\n",energy_now,result.count,result.pos);}
-                        return result;
-                    }
-                }
-                j++;
-            }
-
-            // fallen thru equal energies so we need to add it to the list
-            j = list_order[nMax - 1]; // add it to the worst energy position ( prefilled with worst possible value )
-            energy_list[j] = energy_now; // save energy
-            solution_counts[j] = 1; // set number of hits as this is a first
-
-            // save the bits to solution_list
-            for (int i = 0; i < nbits; i++) {
-                solution_list[j][i] = solution_now[i];
-            }
-            (*num_nq_solutions)=MIN((*num_nq_solutions)++,nMax);
-
-            // Create index array of sorted energies
-            result.count= solution_counts[j];
-            val_index_sort(list_order, energy_list, nMax);
-            if (energy_now == energy_list[list_order[0]]) {
-                // duplicate highest energy unique Q and equal to best energy
-                result.code= DUPLICATE_HIGHEST_ENERGY;
-                result.pos= val_index_pos(list_order,energy_list,nMax ,energy_now);
-                if(Verbose_>3) {printf(" DUPLICATE_ENERGY             %lf %d %d\n",energy_now,result.count,result.pos);}
-                return result;
-            } else {
-                // duplicate energy matching older lower energy Q
-                result.code= DUPLICATE_ENERGY_UNIQUE_SOL;
-                result.pos= val_index_pos(list_order,energy_list,nMax ,energy_now);
-                if(Verbose_>3) {printf(" DUPLICATE_ENERGY_UNIQUE_SOL  %lf %d %d\n",energy_now,result.count,result.pos);}
-                return result;
-            }
-        }
-
-        // we have spilled off the list of energies and need to add this one
-        else if (energy_now > energy_list[list_order[i]]) {
-            int j = list_order[nMax - 1]; // add it to the worst energy position as it is unique but within the list
-            energy_list[j] = energy_now; // save energy
-            solution_counts[j] = 1; // set number of hits as this is a first
-
-            // save the bits to solution_list
-            for (int i = 0; i < nbits; i++) {
-                solution_list[j][i] = solution_now[i];
-            }
-            (*num_nq_solutions)=MIN((*num_nq_solutions)++,nMax);
-
-            // create index array of sorted energies
-            val_index_sort(list_order, energy_list, nMax);
-            result.code= NEW_ENERGY_UNIQUE_SOL;
-            result.count= solution_counts[list_order[j]];
-            result.pos= val_index_pos(list_order,energy_list,nMax ,energy_now);
-            if(Verbose_>3) {printf(" NEW_ENERGY_UNIQUE_SOL  %lf %d %d\n",energy_now,result.count,result.pos);}
-            return result;
-        }
-    }
-
-    for (int iL = 0; iL < nMax; iL++) {
-        printf(" %d %d %lf %d \n", list_order[iL], iL,
-        energy_list[list_order[iL]], solution_counts[list_order[iL]]);
-    }
-    exit(9);
-}
-
 // write qubo file to *filename
 void write_qubo(double **qubo, int nMax, const char *filename)
 {
@@ -709,11 +326,3 @@ void write_qubo(double **qubo, int nMax, const char *filename)
     fclose(file);
 }
 
-/*double roundit(double value, int digits)
-{
-        if (value == 0.0) // otherwise it will return 'nan' due to the log10() of zero
-                    return 0.0;
-
-            double factor = pow(10.0, digits - ceil(log10(fabs(value))));
-                return round(value * factor) / factor;   
-}*/
