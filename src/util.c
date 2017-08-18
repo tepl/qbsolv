@@ -123,7 +123,8 @@ void print_opts(int maxNodes)
     }else {
         fprintf(outFile_," find Min,");
     }
-    fprintf(outFile_," SubMatrix= %d\n",SubMatrix_);
+    fprintf(outFile_," SubMatrix= %d,",SubMatrix_);
+    fprintf(outFile_," paramChain= %f\n",paramChain_);
 }
 
 //  This routine performs the standard output for qbsolv

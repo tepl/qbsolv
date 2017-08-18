@@ -19,6 +19,7 @@ extern int    maxNodes_, nCouplers_, nNodes_, findMax_, start_, numsolOut_;
 extern int    my_pid_;
 extern int    Verbose_, SubMatrix_, WriteMatrix_;
 extern char   *outFileNm_, pgmName_[16];
+extern double paramChain_;
 
 extern struct nodeStr_ *nodes_;
 extern struct nodeStr_ *couplers_;

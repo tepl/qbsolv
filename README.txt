@@ -8,7 +8,10 @@ solely using hardware, i.e. without any help from classic solvers.
 In addition, this version has couple more options to give a user
 more control over the algorithm. Original qbsolv has these options hard-coded.
 
-Missing options:
+Added options:
+ * (-p) paramChain
+
+Removed options:
  * (-a) alrorithm
  * (-T) target mode
  * (-t) timeout
@@ -31,7 +34,7 @@ This directory contains the following files and directories:
 
 
     qbsolv -i infile [-o outfile] [-m] [-n] [-w] 
-        [-h] [-v verbosityLevel] [-V] [-q]
+        [-h] [-v verbosityLevel] [-V] [-q] [-r seed] [-p paramChain]
 
 DESCRIPTION 
     qbsolv executes a quadratic unconstrained binary optimization 
@@ -79,7 +82,11 @@ DESCRIPTION
         If present, this optional argument triggers printing the 
         format of the QUBO file.
     -r seed 
-        Used to reset the seed for the random number generation 
+        Used to reset the seed for the random number generation.
+    -p paramChain 
+        This optional argument denotes strength of qubit chains 
+        in a complete graph, default is 15.
+
 
 ------------------------
 qbsolv "qubo" input file format

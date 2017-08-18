@@ -24,6 +24,8 @@ int             maxNodes_, nCouplers_, nNodes_, findMax_,numsolOut_;
 int             Verbose_, SubMatrix_, WriteMatrix_;
 char            *outFileNm_, pgmName_[16];
 double          **val;
+double          paramChain_;
+
 struct nodeStr_ *nodes_;
 struct nodeStr_ *couplers_;
 //  main routine,
@@ -58,6 +60,8 @@ int  main( int argc,  char *argv[])
     WriteMatrix_ = false;
     outFile_     = stdout;
     int64_t seed       = 17932241798878;
+    paramChain_  = 15.0;
+
     int  errorCount = 0;
 
     static struct option longopts[] = {
@@ -72,6 +76,7 @@ int  main( int argc,  char *argv[])
         { "output",         required_argument, NULL, 'o'},
         { "quboFormat",     no_argument,       NULL, 'q'},
         { "seed",           required_argument, NULL, 'r'},
+        { "paramChain",     required_argument, NULL, 'p'},
         { NULL,             no_argument,       NULL, 0}
     };
 
@@ -82,7 +87,7 @@ int  main( int argc,  char *argv[])
         exit(9);
     }
 
-    while ((opt = getopt_long(argc, argv, "Hhi:o:v:Vn:wmo:qr:", longopts, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "Hhi:o:v:Vn:wmo:qr:p:", longopts, &option_index)) != -1) {
         switch (opt) {
         case 'H':
         case 'h':
@@ -124,6 +129,9 @@ int  main( int argc,  char *argv[])
             break;
         case 'w':
             WriteMatrix_ = true;
+            break;
+        case 'p':
+            paramChain_ = strtod(optarg, (char**)NULL); // penalty for chains
             break;
         default: /* '?' or unknown */
             print_help();
@@ -173,7 +181,7 @@ int  main( int argc,  char *argv[])
 void  print_help(void)
 {
     printf("\n\t%s -i infile [-o outfile] [-m] [-n] [-S SubMatrix] [-w] \n"
-           "\t\t[-h] [-v verbosityLevel] [-V] [-q]\n"
+           "\t\t[-h] [-v verbosityLevel] [-V] [-q] [-p paramChain]\n"
            "\nDESCRIPTION\n"
            "\tqbsolv executes a quadratic unconstrained binary optimization \n"
            "\t(QUBO) problem represented in a file, providing bit-vector \n"
@@ -229,7 +237,10 @@ void  print_help(void)
            "\t\tIf present, this optional argument triggers printing the \n"
            "\t\tformat of the QUBO file.\n"
            "\t-r seed \n"
-           "\t\tUsed to reset the seed for the random number generation \n",
+           "\t\tUsed to reset the seed for the random number generation.\n"
+           "\t-p paramChain \n"
+           "\t\tThis optional argument denotes strength of qubit chains \n"
+           "\t\tin a complete graph, default is 15.\n",
            pgmName_, defaultRepeats);
 
     return;

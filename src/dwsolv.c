@@ -182,10 +182,10 @@ void dw_solver(double **val, int maxNodes, int8_t *Q)
     }
     fclose(f);
 
-    sprintf(DWcommand, "bash -c \'dw bind param_chain=15.0 /tmp/qbs%d.b  > /dev/null;"
+    sprintf(DWcommand, "bash -c \'dw bind param_chain=%f /tmp/qbs%d.b  > /dev/null;"
             "dw exec num_reads=10 qbs%d.qmi  > /dev/null;"
             "dw val -s 1 qbs%d.sol |sed -n \'%d,%dp\' |cut -f3 -d\" \" > /tmp/qbs%d.xB\' \n",
-            my_pid_, my_pid_, my_pid_, 6, 5+maxNodes, my_pid_);
+            paramChain_,my_pid_, my_pid_, my_pid_, 6, 5+maxNodes, my_pid_);
     sysResult = system(DWcommand);
     if (sysResult != 0 ) {
         DL; printf("system call error %d\n %s\n", sysResult, DWcommand);
