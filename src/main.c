@@ -25,6 +25,7 @@ int             Verbose_, SubMatrix_, WriteMatrix_;
 char            *outFileNm_, pgmName_[16];
 double          **val;
 double          paramChain_;
+int             numReads_;
 
 struct nodeStr_ *nodes_;
 struct nodeStr_ *couplers_;
@@ -61,6 +62,7 @@ int  main( int argc,  char *argv[])
     outFile_     = stdout;
     int64_t seed       = 17932241798878;
     paramChain_  = 15.0;
+    numReads_    = 10;
 
     int  errorCount = 0;
 
@@ -77,6 +79,7 @@ int  main( int argc,  char *argv[])
         { "quboFormat",     no_argument,       NULL, 'q'},
         { "seed",           required_argument, NULL, 'r'},
         { "paramChain",     required_argument, NULL, 'p'},
+        { "numReads",       required_argument, NULL, 'R'},
         { NULL,             no_argument,       NULL, 0}
     };
 
@@ -87,7 +90,7 @@ int  main( int argc,  char *argv[])
         exit(9);
     }
 
-    while ((opt = getopt_long(argc, argv, "Hhi:o:v:Vn:wmo:qr:p:", longopts, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "Hhi:o:v:Vn:wmo:qr:p:R:", longopts, &option_index)) != -1) {
         switch (opt) {
         case 'H':
         case 'h':
@@ -132,6 +135,9 @@ int  main( int argc,  char *argv[])
             break;
         case 'p':
             paramChain_ = strtod(optarg, (char**)NULL); // penalty for chains
+            break;
+        case 'R':
+            numReads_ = strtol(optarg, &chx, 10); // number of reads
             break;
         default: /* '?' or unknown */
             print_help();
@@ -181,7 +187,7 @@ int  main( int argc,  char *argv[])
 void  print_help(void)
 {
     printf("\n\t%s -i infile [-o outfile] [-m] [-n] [-S SubMatrix] [-w] \n"
-           "\t\t[-h] [-v verbosityLevel] [-V] [-q] [-p paramChain]\n"
+           "\t\t[-h] [-v verbosityLevel] [-V] [-q] [-p paramChain] [-R numReads]\n"
            "\nDESCRIPTION\n"
            "\tqbsolv executes a quadratic unconstrained binary optimization \n"
            "\t(QUBO) problem represented in a file, providing bit-vector \n"
@@ -240,7 +246,10 @@ void  print_help(void)
            "\t\tUsed to reset the seed for the random number generation.\n"
            "\t-p paramChain \n"
            "\t\tThis optional argument denotes strength of qubit chains \n"
-           "\t\tin a complete graph, default is 15.\n",
+           "\t\tin a complete graph, default is 15.\n"
+           "\t-R numReads \n"
+           "\t\tThis optional argument denotes number of reads,\n"
+           "\t\tdefault is 10.\n",
            pgmName_, defaultRepeats);
 
     return;

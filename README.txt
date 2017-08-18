@@ -10,6 +10,7 @@ more control over the algorithm. Original qbsolv has these options hard-coded.
 
 Added options:
  * (-p) paramChain
+ * (-R) numReads
 
 Removed options:
  * (-a) alrorithm
@@ -34,7 +35,7 @@ This directory contains the following files and directories:
 
 
     qbsolv -i infile [-o outfile] [-m] [-n] [-w] 
-        [-h] [-v verbosityLevel] [-V] [-q] [-r seed] [-p paramChain]
+        [-h] [-v verbosityLevel] [-V] [-q] [-r seed] [-p paramChain] [-R numReads]
 
 DESCRIPTION 
     qbsolv executes a quadratic unconstrained binary optimization 
@@ -86,7 +87,9 @@ DESCRIPTION
     -p paramChain 
         This optional argument denotes strength of qubit chains 
         in a complete graph, default is 15.
-
+    -R numReads 
+        This optional argument denotes number of reads,
+        default is 10.
 
 ------------------------
 qbsolv "qubo" input file format
