@@ -20,6 +20,8 @@ Removed options:
 
 
 Updated content of original README.txt
+<pre>
+
 
 This directory contains the following files and directories:
 - README.txt:       this file
@@ -171,4 +173,6 @@ elements of a QUBO benchmark file, not to represent a real problem.
         0  3   -2
         1  3   4.5678
         2  3   -3.22
+
+</pre>
 
