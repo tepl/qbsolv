@@ -1,3 +1,15 @@
+Qbsolv (no tabu search)
+=======================
+
+This version of qbsolv has no Tabu search and is supposed to be used
+in DW environment only. Thus, one can see how good are solutions obtained
+solely using hardware, i.e. without any help from classic solvers.
+
+In addition, this version has couple more options to give a user
+more control over the algorithm. Original qbsolv has these options hard-coded.
+
+
+
 README.txt file for qbsolv 
 
 This directory contains the following files and directories:
