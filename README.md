@@ -11,6 +11,7 @@ more control over the algorithm. Original qbsolv has these options hard-coded.
 Added options:
  * [-p] paramChain
  * [-R] numReads
+ * [-a] annealingTime
 
 Removed options:
  * [-a] alrorithm
@@ -37,7 +38,8 @@ This directory contains the following files and directories:
 
 
     qbsolv -i infile [-o outfile] [-m] [-n repeats] [-w] 
-        [-h] [-v verbosityLevel] [-V] [-q] [-r seed] [-p paramChain] [-R numReads]
+        [-h] [-v verbosityLevel] [-V] [-q] [-r seed]
+        [-p paramChain] [-R numReads] [-a annealingTime]
 
 DESCRIPTION 
     qbsolv executes a quadratic unconstrained binary optimization 
@@ -90,7 +92,11 @@ DESCRIPTION
         in a complete graph. The default value is 15.
     -R numReads 
         This optional argument denotes number of reads.
-        The default value is 10.",
+        The default value is 10.
+    -a annealingTime 
+        This optional argument denotes annealing time in microseconds.
+        The default value is 20.
+
 
 ------------------------
 qbsolv "qubo" input file format
