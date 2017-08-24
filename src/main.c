@@ -27,6 +27,7 @@ double          **val;
 double          paramChain_;
 int             numReads_;
 int             nRepeats_;
+int             annealingTime_;
 
 struct nodeStr_ *nodes_;
 struct nodeStr_ *couplers_;
@@ -55,15 +56,16 @@ int  main( int argc,  char *argv[])
     FILE *inFile    = NULL;
 
     strcpy(pgmName_, "qbsolv");
-    findMax_     = false;
-    Verbose_     = 0;
-    nRepeats_    = defaultRepeats;
+    findMax_        = false;
+    Verbose_        = 0;
+    nRepeats_       = defaultRepeats;
 
-    WriteMatrix_ = false;
-    outFile_     = stdout;
-    int64_t seed       = 17932241798878;
-    paramChain_  = 15.0;
-    numReads_    = 10;
+    WriteMatrix_    = false;
+    outFile_        = stdout;
+    int64_t seed    = 17932241798878;
+    paramChain_     = 15.0;
+    numReads_       = 10;
+    annealingTime_  = 20;
 
     int  errorCount = 0;
 
@@ -81,6 +83,7 @@ int  main( int argc,  char *argv[])
         { "seed",           required_argument, NULL, 'r'},
         { "paramChain",     required_argument, NULL, 'p'},
         { "numReads",       required_argument, NULL, 'R'},
+        { "annealingTime",  required_argument, NULL, 'a'},
         { NULL,             no_argument,       NULL, 0}
     };
 
@@ -91,7 +94,7 @@ int  main( int argc,  char *argv[])
         exit(9);
     }
 
-    while ((opt = getopt_long(argc, argv, "Hhi:o:v:Vn:wmo:qr:p:R:", longopts, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "Hhi:o:v:Vn:wmo:qr:p:R:a:", longopts, &option_index)) != -1) {
         switch (opt) {
         case 'H':
         case 'h':
@@ -139,6 +142,9 @@ int  main( int argc,  char *argv[])
             break;
         case 'R':
             numReads_ = strtol(optarg, &chx, 10); // number of reads
+            break;
+        case 'a':
+            annealingTime_ = strtol(optarg, &chx, 10); // annealing time
             break;
         default: /* '?' or unknown */
             print_help();
@@ -188,7 +194,7 @@ int  main( int argc,  char *argv[])
 void  print_help(void)
 {
     printf("\n\t%s -i infile [-o outfile] [-m] [-n repeats] [-S SubMatrix] [-w] \n"
-           "\t\t[-h] [-v verbosityLevel] [-V] [-q] [-p paramChain] [-R numReads]\n"
+           "\t\t[-h] [-v verbosityLevel] [-V] [-q] [-p paramChain] [-R numReads] [-a annealingTime]\n"
            "\nDESCRIPTION\n"
            "\tqbsolv executes a quadratic unconstrained binary optimization \n"
            "\t(QUBO) problem represented in a file, providing bit-vector \n"
@@ -249,7 +255,10 @@ void  print_help(void)
            "\t\tin a complete graph. The default value is 15.\n"
            "\t-R numReads \n"
            "\t\tThis optional argument denotes number of reads.\n"
-           "\t\tThe default value is 10.\n",
+           "\t\tThe default value is 10.\n"
+           "\t-a annealingTime \n"
+           "\t\tThis optional argument denotes annealing time in microseconds.\n"
+           "\t\tThe default value is 20.\n",
            pgmName_, defaultRepeats);
 
     return;

@@ -22,6 +22,7 @@ extern char   *outFileNm_, pgmName_[16];
 extern double paramChain_;
 extern int    numReads_;
 extern int    nRepeats_;
+extern int    annealingTime_;
 
 extern struct nodeStr_ *nodes_;
 extern struct nodeStr_ *couplers_;
