@@ -9,15 +9,16 @@ In addition, this version has couple more options to give a user
 more control over the algorithm. Original qbsolv has these options hard-coded.
 
 Added options:
- * [-p] paramChain
- * [-R] numReads
- * [-a] annealingTime
+ * [-p paramChain]
+ * [-R numReads]
+ * [-a annealingTime]
+ * [-T]
 
 Removed options:
- * [-a] alrorithm
- * [-T] target mode
- * [-t] timeout
- * [-S] subproblemSize
+ * [-a alrorithm]
+ * [-T target mode]
+ * [-t timeout]
+ * [-S subproblemSize]
 
 
 Updated content of original README.txt
@@ -39,7 +40,7 @@ This directory contains the following files and directories:
 
     qbsolv -i infile [-o outfile] [-m] [-n repeats] [-w] 
         [-h] [-v verbosityLevel] [-V] [-q] [-r seed]
-        [-p paramChain] [-R numReads] [-a annealingTime]
+        [-p paramChain] [-R numReads] [-a annealingTime] [-T]
 
 DESCRIPTION 
     qbsolv executes a quadratic unconstrained binary optimization 
@@ -96,6 +97,8 @@ DESCRIPTION
     -a annealingTime 
         This optional argument denotes annealing time in microseconds.
         The default value is 20.
+    -T 
+        Calls Tabu search instead of D-Wave.
 
 
 ------------------------
