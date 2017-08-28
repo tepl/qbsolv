@@ -21,13 +21,14 @@
 //
 FILE            *outFile_;
 int             maxNodes_, nCouplers_, nNodes_, findMax_,numsolOut_;
-int             Verbose_, SubMatrix_, WriteMatrix_;
+int             Verbose_, SubMatrix_, WriteMatrix_,Tlist_;
 char            *outFileNm_, pgmName_[16];
 double          **val;
 double          paramChain_;
 int             numReads_;
 int             nRepeats_;
 int             annealingTime_;
+int             tabuSearch_;
 
 struct nodeStr_ *nodes_;
 struct nodeStr_ *couplers_;
@@ -62,10 +63,12 @@ int  main( int argc,  char *argv[])
 
     WriteMatrix_    = false;
     outFile_        = stdout;
+    Tlist_          = -1;
     int64_t seed    = 17932241798878;
     paramChain_     = 15.0;
     numReads_       = 10;
     annealingTime_  = 20;
+    tabuSearch_     = false;
 
     int  errorCount = 0;
 
@@ -84,6 +87,7 @@ int  main( int argc,  char *argv[])
         { "paramChain",     required_argument, NULL, 'p'},
         { "numReads",       required_argument, NULL, 'R'},
         { "annealingTime",  required_argument, NULL, 'a'},
+        { "tabuSearch",     no_argument,       NULL, 'T'},
         { NULL,             no_argument,       NULL, 0}
     };
 
@@ -94,7 +98,7 @@ int  main( int argc,  char *argv[])
         exit(9);
     }
 
-    while ((opt = getopt_long(argc, argv, "Hhi:o:v:Vn:wmo:qr:p:R:a:", longopts, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "Hhi:o:v:Vn:wmo:qr:p:R:a:T", longopts, &option_index)) != -1) {
         switch (opt) {
         case 'H':
         case 'h':
@@ -106,6 +110,9 @@ int  main( int argc,  char *argv[])
                 fprintf(stderr, "\n\t Error - can't find/open file " "\"%s\"\n\n", optarg);
                 exit(9);
             }
+            break;
+        case 'l':
+            Tlist_ = strtol(optarg, &chx, 10); // this sets the length of the tabu list
             break;
         case 'm':
             findMax_ = true; // go for the maximum value otherwise the minimum is found by default
@@ -145,6 +152,9 @@ int  main( int argc,  char *argv[])
             break;
         case 'a':
             annealingTime_ = strtol(optarg, &chx, 10); // annealing time
+            break;
+        case 'T':
+            tabuSearch_ = true;
             break;
         default: /* '?' or unknown */
             print_help();
@@ -258,7 +268,9 @@ void  print_help(void)
            "\t\tThe default value is 10.\n"
            "\t-a annealingTime \n"
            "\t\tThis optional argument denotes annealing time in microseconds.\n"
-           "\t\tThe default value is 20.\n",
+           "\t\tThe default value is 20.\n"
+           "\t-T \n"
+           "\t\tCalls Tabu search instead of D-Wave.\n",
            pgmName_, defaultRepeats);
 
     return;

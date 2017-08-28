@@ -117,10 +117,14 @@ void print_solution_and_qubo(int8_t *solution, int maxNodes, double **qubo)
 void print_opts(int maxNodes)
 {
     fprintf(outFile_, "%d bits, ", maxNodes);
-    fprintf(outFile_,"Quantum solver,");
+    if (tabuSearch_) {
+        fprintf(outFile_,"Tabu solver,");
+    } else{
+        fprintf(outFile_,"Quantum solver,");
+    }
     if ( findMax_ ) {
         fprintf(outFile_," find Max,");
-    }else {
+    } else {
         fprintf(outFile_," find Min,");
     }
     fprintf(outFile_," SubMatrix= %d,",SubMatrix_);
@@ -258,6 +262,24 @@ void val_index_sort(int *index, double *val, int n)
 
     for (i = 0; i < n; i++) index[i] = i;
     shuffle_index(index, n);
+    quick_sort_iterative_index(val, index, n, stack);
+    free(stack);
+    // check code:
+    // for (i=0;i<n-1;i++) { if (val[index[i]]<val[index[i+1]]) { DL; exit(9); } }
+    return;
+}
+
+void val_index_sort_ns(int *index, double *val, int n)
+{
+    int i;
+    int *stack; // temp space = n + 1
+    // Create an auxiliary stack
+    if ((GETMEM(stack, int, n + 1)) == NULL) {
+        BADMALLOC
+    }
+
+    // Assure that the index array covers val[] completely
+    for (i = 0; i < n; i++) index[i] = i;
     quick_sort_iterative_index(val, index, n, stack);
     free(stack);
     // check code:

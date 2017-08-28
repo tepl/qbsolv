@@ -71,6 +71,7 @@ void  print_opts( );
 void  print_output(int maxNodes, int8_t *Q, long numPartCalls, double energy, double seconds);
 void  quick_sort_iterative_index(double arr[], int ind[], int n, int stack[]);
 void  val_index_sort(int *index, double *val, int n);
+void  val_index_sort_ns(int *index, double *val, int n);
 void  index_sort(int *index, int n, short FWD);
 bool dw_established();
 void dw_init( );
