@@ -29,6 +29,7 @@ int             numReads_;
 int             nRepeats_;
 int             annealingTime_;
 int             tabuSearch_;
+int64_t         seed_;
 
 struct nodeStr_ *nodes_;
 struct nodeStr_ *couplers_;
@@ -64,7 +65,7 @@ int  main( int argc,  char *argv[])
     WriteMatrix_    = false;
     outFile_        = stdout;
     Tlist_          = -1;
-    int64_t seed    = 17932241798878;
+    seed_           = 17932241798878;
     paramChain_     = 15.0;
     numReads_       = 10;
     annealingTime_  = 20;
@@ -139,7 +140,7 @@ int  main( int argc,  char *argv[])
             exit(0);
             break;
         case 'r':
-            seed = strtol(optarg, &chx, 10); // sets the seed value
+            seed_ = strtol(optarg, &chx, 10); // sets the seed value
             break;
         case 'w':
             WriteMatrix_ = true;
@@ -164,7 +165,7 @@ int  main( int argc,  char *argv[])
     }
     // options from command line complete
     //
-    srand( seed );
+    srand( seed_ );
 
     if (inFile == NULL) {
         fprintf(stderr, "\n\t%s error -- no input file (-i option) specified"

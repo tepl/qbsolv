@@ -24,6 +24,7 @@ extern int    numReads_;
 extern int    nRepeats_;
 extern int    annealingTime_;
 extern int    tabuSearch_;
+extern int64_t seed_;
 
 extern struct nodeStr_ *nodes_;
 extern struct nodeStr_ *couplers_;

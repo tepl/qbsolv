@@ -130,8 +130,9 @@ void print_opts(int maxNodes)
     fprintf(outFile_," SubMatrix= %d,",SubMatrix_);
     fprintf(outFile_," paramChain= %f,",paramChain_);
     fprintf(outFile_," numReads= %d,",numReads_);
-    fprintf(outFile_," numRepeats= %d",nRepeats_);
-    fprintf(outFile_," annealingTime= %d\n",annealingTime_);
+    fprintf(outFile_," numRepeats= %d,",nRepeats_);
+    fprintf(outFile_," annealingTime= %d,",annealingTime_);
+    fprintf(outFile_," seed= %ld\n",seed_);
 }
 
 //  This routine performs the standard output for qbsolv
