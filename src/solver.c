@@ -642,7 +642,7 @@ void solve(double **qubo, const int qubo_size, int nRepeats)
     print_output(qubo_size, best_solution, numPartCalls, sign * best_energy, CPSECONDS);
 
     // Print passes
-    if( qubo_size > subMatrix ) {
+    if( !tabuSearch_ && qubo_size > subMatrix ) {
         for (int RepeatPass = 0; RepeatPass < nRepeats; RepeatPass++){
             fprintf(outFile_, "RepeatPass %d %f\n", RepeatPass, sign * energies[RepeatPass]);
         }
