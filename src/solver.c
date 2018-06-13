@@ -568,68 +568,72 @@ void solve(double **qubo, const int qubo_size, int nRepeats)
     if (GETMEM(Icompress, int, qubo_size) == NULL) BADMALLOC
     if (GETMEM(energies, double, nRepeats) == NULL) BADMALLOC
 
-    // QUBO fits into one subQUBO
-    if ( qubo_size <= subMatrix ) {
+    // Tabu search
+    if( tabuSearch_) {
 
-        if( tabuSearch_) {
-            tb_solver(qubo, qubo_size, best_solution);
-        } else {
-            dw_solver(qubo, qubo_size, best_solution);
-        }
-
+        tb_solver(qubo, qubo_size, best_solution);
         best_energy = Simple_evaluate(best_solution,  qubo_size, qubo);
 
-    }
+    // D-Wave search
+    } else {
 
-    // QUBO does not fit into one subQUBO
-    else {
+        // QUBO fits into one subQUBO
+        if ( qubo_size <= subMatrix ) {
 
-        // Setup l_max
-        int  l_max = qubo_size - SubMatrix_;
+            dw_solver(qubo, qubo_size, best_solution);
+            best_energy = Simple_evaluate(best_solution,  qubo_size, qubo);
 
-        // Setup best energy
-        best_energy = BIGNEGFP;
+        // QUBO does not fit into one subQUBO
+        } else {
 
-        // Use random solution to initialize flip_cost
-        randomize_solution(solution, qubo_size);
-        energy = evaluate(solution, qubo_size, qubo, flip_cost);
+            // Setup l_max
+            int  l_max = qubo_size - SubMatrix_;
 
-        // Start outer loop
-        for (int RepeatPass = 0; RepeatPass < nRepeats; RepeatPass++){
+            // Setup best energy
+            best_energy = BIGNEGFP;
 
-            // Sort by impact
-            val_index_sort(index, flip_cost, qubo_size);
-
-            // Submatrix passes
-            int change=0;
-            for (int l = 0; l < l_max; l += subMatrix) {
-                if (Verbose_ > 3) printf("Submatrix starting at backbone %d\n", l);
-
-                for (int i = l, j = 0; i < l + subMatrix; i++) {
-                    Icompress[j++] = index[i]; // create compression index
-                }
-                index_sort(Icompress, subMatrix, true); // sort it for effective reduction
-
-                change=change+reduce_solve_projection( Icompress, qubo, qubo_size, subMatrix, solution );
-                numPartCalls++;
-            }
-
-            // Compute energy and flip_cost
+            // Use random solution to initialize flip_cost
+            randomize_solution(solution, qubo_size);
             energy = evaluate(solution, qubo_size, qubo, flip_cost);
 
-            // Save energy
-            energies[RepeatPass] = energy;
+            // Start outer loop
+            for (int RepeatPass = 0; RepeatPass < nRepeats; RepeatPass++){
 
-            // Update best solution
-            if(energy > best_energy){
-                best_energy = energy;
-                best_repeat = RepeatPass;
-                for (int i = 0; i < qubo_size; i++) {
-                    best_solution[i] = solution[i];
+                // Sort by impact
+                val_index_sort(index, flip_cost, qubo_size);
+
+                // Submatrix passes
+                int change=0;
+                for (int l = 0; l < l_max; l += subMatrix) {
+                    if (Verbose_ > 3) printf("Submatrix starting at backbone %d\n", l);
+
+                    for (int i = l, j = 0; i < l + subMatrix; i++) {
+                        Icompress[j++] = index[i]; // create compression index
+                    }
+                    index_sort(Icompress, subMatrix, true); // sort it for effective reduction
+
+                    change=change+reduce_solve_projection( Icompress, qubo, qubo_size, subMatrix, solution );
+                    numPartCalls++;
                 }
-            }
 
-        } // End outer loop
+                // Compute energy and flip_cost
+                energy = evaluate(solution, qubo_size, qubo, flip_cost);
+
+                // Save energy
+                energies[RepeatPass] = energy;
+
+                // Update best solution
+                if(energy > best_energy){
+                    best_energy = energy;
+                    best_repeat = RepeatPass;
+                    for (int i = 0; i < qubo_size; i++) {
+                        best_solution[i] = solution[i];
+                    }
+                }
+
+            } // End outer loop
+
+        }
 
     }
 
