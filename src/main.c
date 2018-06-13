@@ -140,7 +140,7 @@ int  main( int argc,  char *argv[])
             exit(0);
             break;
         case 'r':
-            seed_ = strtol(optarg, &chx, 10); // sets the seed value
+            seed_ = strtoll(optarg, &chx, 10); // sets the seed value
             break;
         case 'w':
             WriteMatrix_ = true;
