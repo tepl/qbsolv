@@ -28,6 +28,10 @@ double          **val;
 double          Target_, Time_;
 struct nodeStr_ *nodes_;
 struct nodeStr_ *couplers_;
+
+// my externals
+int             nRepeats_;
+
 //  main routine,
 //  -read the command line
 //  -read the input qubo file
@@ -56,7 +60,7 @@ int  main( int argc,  char *argv[])
     findMax_     = false;
     UseDwave_    = false;
     Verbose_     = 0;
-    int nRepeats = defaultRepeats;
+    nRepeats_    = defaultRepeats;
     SubMatrix_   = 46; // submatrix default
     strcpy(algo_, "o"); //algorithm default
 
@@ -132,7 +136,7 @@ int  main( int argc,  char *argv[])
             findMax_ = true; // go for the maximum value otherwise the minimum is found by default
             break;
         case 'n':
-            nRepeats = strtol(optarg, &chx, 10); // this sets the number of outer loop repeats without improvement
+            nRepeats_ = strtol(optarg, &chx, 10); // this sets the number of outer loop repeats without improvement
             break;
         case 'v':
             Verbose_ = strtol(optarg, &chx, 10); // this sets the value of the Verbose
@@ -232,7 +236,7 @@ int  main( int argc,  char *argv[])
     if (GETMEM(solution_counts, int, QLEN + 1) == NULL) BADMALLOC
     if (GETMEM(Qindex, int, QLEN + 1) == NULL) BADMALLOC
     
-    solve(val, maxNodes_, nRepeats, solution_list, energy_list, solution_counts, Qindex, QLEN);
+    solve(val, maxNodes_, nRepeats_, solution_list, energy_list, solution_counts, Qindex, QLEN);
     
     free(solution_list); free(energy_list); free(solution_counts); free(Qindex);
     free(val);

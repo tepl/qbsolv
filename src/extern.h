@@ -24,3 +24,6 @@ extern double Target_, Time_;
 
 extern struct nodeStr_ *nodes_;
 extern struct nodeStr_ *couplers_;
+
+// my externals
+extern int    nRepeats_;

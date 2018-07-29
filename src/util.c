@@ -173,6 +173,7 @@ void print_opts(int maxNodes)
     }
     fprintf(outFile_," SubMatrix= %d,",SubMatrix_);
     fprintf(outFile_," -a %s,",algo_);
+    fprintf(outFile_," -n %d,",nRepeats_);
     if ( TargetSet_ )  fprintf(outFile_, " Target of %8.5f,", Target_);
     fprintf(outFile_," timeout=%9.1f sec\n",Time_);
 
