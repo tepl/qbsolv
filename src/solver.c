@@ -586,7 +586,7 @@ void solve(double **qubo, const int qubo_size, int nRepeats, int8_t **solution_l
     // initialize and set some tuning parameters
     //
     const int Progress_check = 12;              // number of non-progresive passes thru main loop before reset
-    const float SubMatrix_span = 0.214;         // percent of the total size will be covered by the subMatrix pass
+    const float SubMatrix_span = 1.0; //0.214;  // percent of the total size will be covered by the subMatrix pass
     const int64_t InitialTabuPass_factor=6500;  // initial pass factor for tabu iterations
     const int64_t TabuPass_factor=1600.;        // iterative pass factor for tabu iterations
 
