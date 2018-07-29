@@ -550,24 +550,26 @@ int reduce_solve_projection( int *Icompress, double **qubo, int qubo_size, int s
 // @param nRepeats is the number of iterations without improvement before giving up
 void solve(double **qubo, const int qubo_size, int nRepeats, int8_t **solution_list, double *energy_list, int *solution_counts, int *Qindex, int QLEN)
 {
-    double    *flip_cost, energy;
-    int       *TabuK, *index, start_;
-    int8_t    *solution, *tabu_solution ;
-    long      numPartCalls = 0;
-    int64_t   bit_flips = 0,  IterMax;
+    double energy;
+    double best_energy;
+    int    start_;
+    long   numPartCalls = 0;
+    double sign = findMax_ ? 1.0 : -1.0;
+    double **mat;
+    int8_t *solution;
+    int8_t *Qbest;
+    int8_t  *matSol;
 
     start_ = clock();
-    bit_flips      = 0;
 
-    // Get some memory for the larger val matrix to solve
+    // allocate solution vector
     if (GETMEM(solution, int8_t, qubo_size) == NULL) BADMALLOC
-    if (GETMEM(tabu_solution, int8_t, qubo_size) == NULL) BADMALLOC
-    if (GETMEM(flip_cost, double, qubo_size) == NULL) BADMALLOC
-    if (GETMEM(index, int, qubo_size) == NULL) BADMALLOC
-    if (GETMEM(TabuK, int, qubo_size) == NULL) BADMALLOC
+    for (int i = 0; i < qubo_size; i++) {
+        solution[i]=0;
+    }
 
+    // allocate solutions storage
     int num_nq_solutions=0;
-
     for (int i = 0; i < QLEN+1 ; i++) {
         energy_list[i]     = BIGNEGFP;
         solution_counts[i] = 0;
@@ -576,286 +578,55 @@ void solve(double **qubo, const int qubo_size, int nRepeats, int8_t **solution_l
         }
     }
 
-    // get some memory for reduced sub matrices
-    //int8_t  *sub_solution, *Qt_s, *Qbest;
-    int8_t  *Qbest;
-    double best_energy;
-    int    *Pcompress;
+    // exit if qubo_size is large then SubMatrix_
+    if (qubo_size > SubMatrix_) {
+        printf("Qubo_size > SubMatrix_, exiting...\n");
+        return;
 
-    if (GETMEM(Pcompress, int, qubo_size) == NULL) BADMALLOC
-    // initialize and set some tuning parameters
-    //
-    const int Progress_check = 12;              // number of non-progresive passes thru main loop before reset
-    const float SubMatrix_span = 1.0; //0.214;  // percent of the total size will be covered by the subMatrix pass
-    const int64_t InitialTabuPass_factor=6500;  // initial pass factor for tabu iterations
-    const int64_t TabuPass_factor=1600.;        // iterative pass factor for tabu iterations
-
-    int MaxNodes_sub = MAX(SubMatrix_ + 1, SubMatrix_span * qubo_size);
-    int subMatrix    = SubMatrix_;
-    int l_max        = MIN(qubo_size - SubMatrix_, MaxNodes_sub);
-    int len_index;
-
-    randomize_solution(tabu_solution, qubo_size);
-    for (int i = 0; i < qubo_size; i++) {
-        index[i]    = i;   // initial index to 0,1,2,...qubo_size
-        solution[i]=0;
-    }
-
-    int    l = 0, DwaveQubo = 0;
-    double sign = findMax_ ? 1.0 : -1.0;
-    struct sol_man_rslt result;
-
-    // run initial Searches to prime the solutions for outer loop based upon algorithm choice
-    //
-    if ( strncmp(&algo_[0],"o",strlen("o") )==0) {
-        IterMax = bit_flips + (int64_t)MAX((int64_t)400, InitialTabuPass_factor * (int64_t)qubo_size);
-        if (Verbose_ > 2) {
-            DLT; printf(" Starting Full initial Tabu\n");
-        }
-        energy = tabu_search(solution, tabu_solution, qubo_size, qubo, flip_cost,
-            &bit_flips, IterMax, TabuK, Target_, TargetSet_, index, 0);
-
-        // save best result
-        best_energy = energy;
-        result    = manage_solutions(solution, solution_list, energy, energy_list, solution_counts, Qindex, QLEN, qubo_size,
-            &num_nq_solutions);
-        Qbest=&solution_list[Qindex[0]][0];
-
-    } else if ( strncmp(&algo_[0],"d",strlen("d") )==0) {
-
-        // when using this method we need at least solutions for a "differential" backbone this
-        // step is to prime the solution sets with at least one more
-        //
-        len_index=0;
-        int pass=0;
-        while (len_index < MIN(1*SubMatrix_,qubo_size/2)  ) {
-            //DL;printf(" len_index %d %d \n",len_index,pass);
-            randomize_solution(solution, qubo_size);
-            energy = local_search( solution, qubo_size,  qubo, flip_cost, &bit_flips);
-            best_energy=MAX(best_energy,energy);
-            result = manage_solutions(solution, solution_list, energy, energy_list, solution_counts, 
-                    Qindex, QLEN, qubo_size, &num_nq_solutions);
-            Qbest=&solution_list[Qindex[0]][0];
-            best_energy=energy_list[Qindex[0]];
-            if ( result.code == NEW_HIGH_ENERGY_UNIQUE_SOL ) { // better solution
-               best_energy = energy;
-            }
-            len_index = mul_index_solution_diff(solution_list,num_nq_solutions,qubo_size,Pcompress,0,Qindex); 
-            if ( pass++ > 40 ) break;
-            //printf(" len_index = %d  NU %d  energy %lf\n",len_index,NU,energy);
-        }
-        solution_population( solution, solution_list, num_nq_solutions, qubo_size, Qindex, 10);
-        IterMax = bit_flips + (int64_t)MAX((int64_t)40, InitialTabuPass_factor * (int64_t)qubo_size/2);
-        energy = tabu_search(solution, tabu_solution, qubo_size, qubo, flip_cost,
-            &bit_flips, IterMax, TabuK, Target_, TargetSet_, index, 0);
-        result    = manage_solutions(solution, solution_list, energy, energy_list, solution_counts, Qindex, QLEN, qubo_size,
-            &num_nq_solutions);
-        Qbest=&solution_list[Qindex[0]][0];
-        best_energy=energy_list[Qindex[0]];
-
-
-    }
-    val_index_sort(index, flip_cost, qubo_size); // create index array of sorted values
-    if ( Verbose_ > 0 ) {
-        print_output(qubo_size, solution, numPartCalls, best_energy * sign,CPSECONDS);
-    }
-    if (Verbose_ > 1) {
-        DLT; printf(" V Starting outer loop =%lf iterations %"LONGFORMAT"\n", best_energy * sign, bit_flips);
-    }
-
-    // starting main search loop Partition ( run parts on tabu or Dwave ) --> Tabu rinse and repeat
-    short RepeatPass = 0, NoProgress = 0;
-    short ContinueWhile = false;
-    if ( TargetSet_ ) {
-        if ( best_energy >= (sign * Target_) ) {
-            ContinueWhile = false;
-        } else {
-            ContinueWhile = true;
-        }
+    // or start solving
     } else {
-        if ( RepeatPass < nRepeats) {
-            ContinueWhile = true;
-        } else {
-            ContinueWhile = false;
+
+        // allocate temporary arrays
+        mat = (double**)malloc2D(SubMatrix_, SubMatrix_, sizeof(double) );
+        if (GETMEM(matSol, int8_t, SubMatrix_) == NULL) BADMALLOC
+
+        // loop over repeats
+        for (int i = 0; i < nRepeats; i++) {
+
+            // fill out matrix
+            for (int i = 0; i < SubMatrix_; i++) {
+                for (int j = 0; j < SubMatrix_; j++)
+                    if( i < qubo_size && j < qubo_size ) {
+                        mat[i][j] = qubo[i][j];
+                    } else {
+                        mat[i][j] = 0.0;
+                    }
+            }
+
+            // run D-Wave solver
+            dw_solver(mat, SubMatrix_, matSol);
+
+            // copy solution
+            for (int i = 0; i < qubo_size; i++) {
+              solution[i] = matSol[i];
+            }
+
+            // evaluate energy
+            energy = Simple_evaluate(solution, qubo_size, qubo);
+
+            // store solution
+            manage_solutions(solution, solution_list, energy, energy_list, solution_counts, Qindex, QLEN, qubo_size, &num_nq_solutions);
         }
     }
-    if ( qubo_size < 20 || subMatrix > qubo_size ) {
-        ContinueWhile = false; // trivial problem or Submatrix won't contribute
-    }
 
-    DwaveQubo = 0;
+    // print best solution
+    Qbest = &solution_list[Qindex[0]][0];
+    best_energy = energy_list[Qindex[0]];
+    print_output(qubo_size, Qbest, numPartCalls, best_energy * sign, CPSECONDS);
 
-    // outer loop begin
-    while ( ContinueWhile ) {
-        if ( strncmp(&algo_[0],"o",strlen("o") )==0) {
-            // use the first "remove" index values to remove rows and columns from new matrix
-            // initial TabuK to nothing tabu sub_solution[i] = Q[i];
-            // create compression bit vector
-            val_index_sort(index, flip_cost, qubo_size); // Create index array of sorted values
-            l_max = MIN(qubo_size - SubMatrix_, MaxNodes_sub);
-            if (Verbose_ > 1) printf("Reduced submatrix solution l = 0; %d, subMatrix size = %d\n",
-                                 l_max, subMatrix);
-        } else if ( strncmp(&algo_[0],"d",strlen("d") )==0) {
-            // pick "backbone" as an index of non-matching bits in solutions
-            //
-            len_index = mul_index_solution_diff(solution_list,num_nq_solutions,qubo_size,Pcompress,0,Qindex); 
-            // need to cover all of len_index so we will pad out the Qindex to a multiple of subMatrix
-            l_max = len_index;
-        }
-
-        // begin submatrix passes
-        if ( NoProgress % Progress_check == (Progress_check - 1) ) { // every Progress_check (th) loop without progess
-            // reset completely
-            // solution_population( solution, solution_list, num_nq_solutions, qubo_size, Qindex);
-            randomize_solution(solution, qubo_size);
-            if (Verbose_ > 1) {
-                DLT; printf(" \n\n Reset Q and start over Repeat = %d/%d, as no progress is exhausted %d %d\n\n\n",
-                            nRepeats, RepeatPass, NoProgress, NoProgress % Progress_check);
-            }
-        } else {
-            int change=0;
-            { // scope of parallel region
-            int t_change=0;
-            int *Icompress;
-            if (GETMEM(Icompress, int, qubo_size) == NULL) BADMALLOC
-            for (l = 0; l < l_max; l += subMatrix) {
-                if ( strncmp(&algo_[0],"o",strlen("o") )==0) {
-                    if (Verbose_ > 3) printf("Submatrix starting at backbone %d\n", l);
-
-                    for (int i = l, j = 0; i < l + subMatrix; i++) {
-                        Icompress[j++] = index[i]; // create compression index
-                    }
-                    index_sort(Icompress, subMatrix, true); // sort it for effective reduction
-
-                    // coarsen and reduce the problem
-                } else if ( strncmp(&algo_[0],"d",strlen("d") )==0) {
-                    if (Verbose_ > 3) printf("Submatrix starting at backbone %d\n", l);
-                    int i_strt=l;
-                    if ( l + subMatrix > len_index ) i_strt=len_index-subMatrix-1; // cover all of len_index by backup on last pass
-                    for (int i = i_strt, j = 0; i < i_strt + subMatrix; i++) {
-                        Icompress[j++] = Pcompress[i]; // create compression index
-                    }
-                }
-                t_change=reduce_solve_projection( Icompress, qubo, qubo_size, subMatrix, solution );
-                // do the following in a critical region
-
-                change=change+t_change;
-                numPartCalls++;
-                DwaveQubo++;
-                // end critical region
-            }
-            free ( Icompress ) ;
-            }
-
-            // submatrix search did not produce enough new values, so randomize those bits
-            if (change <= 2) {
-                if ( strncmp(&algo_[0],"o",strlen("o") )==0) {
-                    randomize_solution_by_index(solution, l, index );
-                } else if ( strncmp(&algo_[0],"d",strlen("d") )==0) {
-                    len_index = mul_index_solution_diff(solution_list,num_nq_solutions,qubo_size,Pcompress,0,Qindex); 
-                    randomize_solution_by_index(solution, len_index, Pcompress );
-                }
-                if (Verbose_ > 3) {
-                    printf(" Submatrix search did not produce enough new values, so randomize %d bits\n",l);
-                } else {
-                    if (Verbose_ > 3) {
-                        printf("Number of solution Bits changed %d \n ",change);
-                    }
-                }
-            }
-
-            // completed submatrix passes
-            if ( Verbose_ > 1 ) printf("\n");
-        }
-        if ( Verbose_ > 1 ) {
-            DLT; printf(" ***Full Tabu  -- after partition pass \n");
-        }
-        // FULL TABU run here
-
-        IterMax = bit_flips + TabuPass_factor * (int64_t)qubo_size;
-        val_index_sort(index, flip_cost, qubo_size); // Create index array of sorted values
-        energy = tabu_search(solution, tabu_solution, qubo_size, qubo, flip_cost,
-            &bit_flips, IterMax, TabuK, Target_, TargetSet_ ,index,0);
-        val_index_sort(index, flip_cost, qubo_size); // Create index array of sorted values
-
-        if ( Verbose_ > 1 ) {
-            DLT; printf("Latest answer  %4.5f iterations =%"LONGFORMAT"\n", energy * sign,(int64_t) bit_flips);
-        }
-
-        result = manage_solutions(solution, solution_list, energy, energy_list, solution_counts, Qindex, QLEN, qubo_size,
-                &num_nq_solutions);
-        Qbest=&solution_list[Qindex[0]][0];
-        best_energy=energy_list[Qindex[0]];
-
-        //print_solutions( solution_list,energy_list,solution_counts,num_nq_solutions,qubo_size,Qindex);
-        if ( result.code == NEW_HIGH_ENERGY_UNIQUE_SOL ) { // better solution
-            RepeatPass = 0;
-
-            if ( Verbose_ > 1 ) {
-                DLT; printf(" IMPROVEMENT; RepeatPass set to %d\n", RepeatPass);
-            }
-            if ( Verbose_ > 0 ) {
-                print_output(qubo_size, Qbest, numPartCalls, best_energy * sign, CPSECONDS);
-            }
-        } else if ( result.code == DUPLICATE_ENERGY || result.code == DUPLICATE_HIGHEST_ENERGY  ) { // equal solution, but it is different
-            if ( result.pos > 4  ||   result.count > 8 ) {
-                randomize_solution(solution, qubo_size);
-            }
-            RepeatPass++;
-            if (result.code == DUPLICATE_ENERGY) {
-                NoProgress++;
-            } 
-            if ( result.code == DUPLICATE_HIGHEST_ENERGY && result.count == 1 ) {
-                if ( Verbose_ > 0 ) {
-                    print_output(qubo_size, Qbest, numPartCalls, best_energy * sign, CPSECONDS);
-                }
-            }
-        } else if ( result.code == NOTHING ) { // not as good as our worst so far
-            RepeatPass++;
-            NoProgress++;
-            if ( Verbose_ > 1) {
-                printf("NO improvement RepeatPass =%d\n", RepeatPass);
-            }
-        }
-
-        if ( Verbose_ > 1) {
-            DLT; printf("V Best outer loop =%lf iterations %"LONGFORMAT"\n", best_energy * sign, bit_flips);
-        }
-
-        // check on, if to continue the outer loop
-        if ( TargetSet_ ) {
-            if ( best_energy >= (sign * Target_) ) {
-                ContinueWhile = false;
-            } else {
-                ContinueWhile = true;
-            }
-        } else {
-            if ( RepeatPass < nRepeats) {
-                ContinueWhile = true;
-            } else {
-                ContinueWhile = false;
-            }
-        }
-
-        // timeout test
-        if ( CPSECONDS >= Time_ ) {
-            ContinueWhile = false;
-        }
-    } // end of outer loop
-
-    // all done print results if needed and free allocated arrays
-    if (WriteMatrix_)
-        print_solution_and_qubo(solution, qubo_size, qubo);
-
-    if ( Verbose_ == 0 ) {
-        Qbest=&solution_list[Qindex[0]][0];
-        best_energy=energy_list[Qindex[0]];
-        //    printf(" evaluated solution %8.2lf\n",sign*Simple_evaluate(Qbest,  qubo_size, qubo));
-        print_output(qubo_size, Qbest, numPartCalls, best_energy * sign, CPSECONDS);
-    }
-
-    free(solution); free(tabu_solution); free(flip_cost);
-    free(index); free(TabuK); free(Pcompress);
+    free(mat);
+    free(matSol);
+    free(solution);
 
     return;
 }

@@ -92,6 +92,9 @@ int  main( int argc,  char *argv[])
     char *chx; // used as exit ptr in strto(x) functions
     if ( dw_established () ) {  // user has set up a DW envir
         UseDwave_ = true;
+    } else {
+        printf("No D-Wave environment, exiting.\n");
+        exit(0);
     }
 
     while ((opt = getopt_long(argc, argv, "Hhi:o:v:VS:T:l:n:wmo:t:qr:a:", longopts, &option_index)) != -1) {
