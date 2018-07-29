@@ -25,7 +25,7 @@
 os=$( uname | tr '[:upper:]' '[:lower:]' )
 case $os in
     *darwin*) CC=clang;;
-    *linux*)  CC=clang;;
+    *linux*)  CC=gcc;; #clang;;
     *ming*)   CC=gcc;;
     *) CC=gcc;;
 esac
