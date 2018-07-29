@@ -190,7 +190,7 @@ void dw_solver(double **val, int maxNodes, int8_t *Q)
             param_values[k++]= -val[i][j];
         }
     }
-    param_values[k]=15.0;
+    param_values[k] = chainPen_;
 
     // bind to .epqmi
     DW_epqmi_bind(epqmi_,param_values );
