@@ -31,6 +31,7 @@ struct nodeStr_ *couplers_;
 
 // my externals
 int             nRepeats_;
+int             nReads_;
 
 //  main routine,
 //  -read the command line
@@ -60,7 +61,6 @@ int  main( int argc,  char *argv[])
     findMax_     = false;
     UseDwave_    = false;
     Verbose_     = 0;
-    nRepeats_    = defaultRepeats;
     SubMatrix_   = 46; // submatrix default
     strcpy(algo_, "o"); //algorithm default
 
@@ -71,6 +71,10 @@ int  main( int argc,  char *argv[])
     Tlist_       = -1; // tabu list length  -1 signals go with defaults
     int64_t seed       = 17932241798878;
     int  errorCount = 0;
+
+    // my externals
+    nRepeats_    = defaultRepeats;
+    nReads_      = 25;
 
     static struct option longopts[] = {
         { "help",           no_argument,       NULL, 'h'},
@@ -89,6 +93,10 @@ int  main( int argc,  char *argv[])
         { "tlist",          required_argument, NULL, 'l'},
         { "seed",           required_argument, NULL, 'r'},
         { "Algo",           required_argument, NULL, 'a'},
+
+    // my externals
+        { "reads",          required_argument, NULL, 'R'},
+
         { NULL,             no_argument,       NULL, 0}
     };
 
@@ -101,7 +109,7 @@ int  main( int argc,  char *argv[])
         exit(0);
     }
 
-    while ((opt = getopt_long(argc, argv, "Hhi:o:v:VS:T:l:n:wmo:t:qr:a:", longopts, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "Hhi:o:v:VS:T:l:n:wmo:t:qr:a:R:", longopts, &option_index)) != -1) {
         switch (opt) {
         case 'a':
             strcpy(algo_, optarg); //algorithm copied off of command line -a option
@@ -184,6 +192,12 @@ int  main( int argc,  char *argv[])
         case 'w':
             WriteMatrix_ = true;
             break;
+
+        // my externals
+        case 'R':
+            nReads_ = strtol(optarg, &chx, 10);
+            break;
+
         default: /* '?' or unknown */
             print_help();
             exit(0);

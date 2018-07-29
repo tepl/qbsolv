@@ -195,7 +195,7 @@ void dw_solver(double **val, int maxNodes, int8_t *Q)
     // bind to .epqmi
     DW_epqmi_bind(epqmi_,param_values );
     
-    if ( DW_epqmi_exec(epqmi_, 25))
+    if ( DW_epqmi_exec(epqmi_, nReads_))
     {
         DL;printf(" error execution of DW_epqmi_bind \n" );
         exit(9);

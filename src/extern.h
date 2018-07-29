@@ -26,4 +26,5 @@ extern struct nodeStr_ *nodes_;
 extern struct nodeStr_ *couplers_;
 
 // my externals
-extern int    nRepeats_;
+extern int nRepeats_;
+extern int nReads_;
