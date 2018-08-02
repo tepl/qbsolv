@@ -32,6 +32,7 @@ struct nodeStr_ *couplers_;
 // my externals
 int             nRepeats_;
 int             nReads_;
+int             annTime_;
 double          chainPen_;
 
 //  main routine,
@@ -76,6 +77,7 @@ int  main( int argc,  char *argv[])
     // my externals
     nRepeats_    = defaultRepeats;
     nReads_      = 25;
+    annTime_     = 20;
     chainPen_    = 15;
 
     static struct option longopts[] = {
@@ -98,6 +100,7 @@ int  main( int argc,  char *argv[])
 
     // my externals
         { "reads",          required_argument, NULL, 'R'},
+        { "annTime",        required_argument, NULL, 'A'},
         { "chainpen",       required_argument, NULL, 'c'},
 
         { NULL,             no_argument,       NULL, 0}
@@ -112,7 +115,7 @@ int  main( int argc,  char *argv[])
         exit(0);
     }
 
-    while ((opt = getopt_long(argc, argv, "Hhi:o:v:VS:T:l:n:wmo:t:qr:a:R:c:", longopts, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "Hhi:o:v:VS:T:l:n:wmo:t:qr:a:R:A:c:", longopts, &option_index)) != -1) {
         switch (opt) {
         case 'a':
             strcpy(algo_, optarg); //algorithm copied off of command line -a option
@@ -199,6 +202,9 @@ int  main( int argc,  char *argv[])
         // my externals
         case 'R':
             nReads_ = strtol(optarg, &chx, 10);
+            break;
+        case 'A':
+            annTime_ = strtol(optarg, &chx, 10);
             break;
         case 'c':
             chainPen_ = strtod(optarg, (char**)NULL);

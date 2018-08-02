@@ -28,4 +28,5 @@ extern struct nodeStr_ *couplers_;
 // my externals
 extern int nRepeats_;
 extern int nReads_;
+extern int annTime_;
 extern double chainPen_;
